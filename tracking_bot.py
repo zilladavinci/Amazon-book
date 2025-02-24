@@ -1,3 +1,4 @@
+
 import http.server
 import socketserver
 import os
@@ -16,6 +17,12 @@ class TrackHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         global visit_log
         client_ip = self.client_address[0]
+
+        # Handle proxy headers to get real IP (Render uses X-Forwarded-For)
+        forwarded_ip = self.headers.get("X-Forwarded-For")
+        if forwarded_ip:
+            client_ip = forwarded_ip.split(",")[0]  # Get real external IP
+
         timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
 
         # Log visitor details
