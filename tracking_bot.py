@@ -1,10 +1,15 @@
 import http.server
 import socketserver
-import time
 import os
+import time
 
-PORT = int(os.environ.get("PORT", 8080))
+# Amazon tracking link
 AMAZON_LINK = "https://www.amazon.com/dp/B0DXLK1CYQ"
+
+# Use the correct Render-assigned port
+PORT = int(os.environ.get("PORT", 10000))
+
+# Storage for visitor logs
 visit_log = []
 
 class TrackHandler(http.server.SimpleHTTPRequestHandler):
@@ -12,14 +17,21 @@ class TrackHandler(http.server.SimpleHTTPRequestHandler):
         global visit_log
         client_ip = self.client_address[0]
         timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+
+        # Log visitor details
         visit_log.append(f"{timestamp} - {client_ip}")
         print(f"[{timestamp}] Visitor from {client_ip}")
+
+        # Redirect user to Amazon link
         self.send_response(302)
         self.send_header('Location', AMAZON_LINK)
         self.end_headers()
 
-if __name__ == "__main__":
+# Start the local tracking server
+try:
     with socketserver.TCPServer(("", PORT), TrackHandler) as httpd:
         print(f"🔥 Tracking bot running on port {PORT}")
-        print(f"📊 Tracking visitors live.\n")
+        print(f"📊 Tracking visitors in real time. Logs update live.\n")
         httpd.serve_forever()
+except KeyboardInterrupt:
+    print("\n❌ Server stopped manually.")
