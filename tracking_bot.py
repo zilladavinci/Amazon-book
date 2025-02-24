@@ -1,4 +1,3 @@
-
 import http.server
 import socketserver
 import os
@@ -16,18 +15,20 @@ visit_log = []
 class TrackHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         global visit_log
-        client_ip = self.client_address[0]
+        client_ip = self.client_address[0]  # Default (may be 127.0.0.1 if proxied)
 
-        # Handle proxy headers to get real IP (Render uses X-Forwarded-For)
+        # Check for real IP from proxy headers (Render/AWS/Cloudflare)
         forwarded_ip = self.headers.get("X-Forwarded-For")
-        if forwarded_ip:
-            client_ip = forwarded_ip.split(",")[0]  # Get real external IP
+        real_ip = forwarded_ip.split(",")[0] if forwarded_ip else client_ip  # Get first IP in chain
 
         timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
 
         # Log visitor details
-        visit_log.append(f"{timestamp} - {client_ip}")
-        print(f"[{timestamp}] Visitor from {client_ip}")
+        visit_log.append(f"{timestamp} - {real_ip}")
+        print(f"[{timestamp}] Visitor Detected:")
+        print(f"  🔹 Client IP (raw): {client_ip}")
+        print(f"  🔹 Forwarded IP: {forwarded_ip}")
+        print(f"  🔹 Logged IP: {real_ip}")
 
         # Redirect user to Amazon link
         self.send_response(302)
